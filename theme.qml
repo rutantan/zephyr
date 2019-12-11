@@ -1,4 +1,5 @@
 import QtQuick 2.12
+
 FocusScope {
 	
 	//colors
@@ -21,7 +22,6 @@ FocusScope {
 	property var white: "#ecf0f1"
 	property var darkgray: "#2f3640"
 	
-	//modify here to change colors
 	//color variables
 	property var textColor: white
 	property var highlightColor: white
@@ -29,9 +29,6 @@ FocusScope {
 	property var leftPaneBackground: blue
 	property var rightPaneBackground: blue
 	property var gameBoxBackgroundColor: darkgray
-	
-	//modify here to change language | 0 = English, 1 = Portuguese
-	property int languageValue: 0;
 	
 	//current index values
 	property int collectionValue: 0; 
@@ -41,6 +38,7 @@ FocusScope {
 	property int rightPaneColorValue: 4;
 	property int gameboxColorValue: 18;
 	property int textColorValue: 17;
+	property int languageValue: 0;
 	
 	property var collectionData: api.collections.get(0);
 	
@@ -297,7 +295,8 @@ FocusScope {
 				}
 			}
 			Component.onCompleted: {
-					changeLanguage();					
+					initMemoryValues();
+					getValuesFromMemory();
 			}
 			
 			MouseArea {
@@ -475,6 +474,7 @@ FocusScope {
 							anchors.fill: parent
 							hoverEnabled: true
 							onClicked: {
+								leftPaneColorValue = leftPaneColorValue + 1;
 								changeColorLeftPane();
 							}onEntered:{
 								button1.color = "gray"
@@ -529,6 +529,7 @@ FocusScope {
 							anchors.fill: parent
 							hoverEnabled: true
 							onClicked: {
+								centerPaneColorValue = centerPaneColorValue + 1;
 								changeColorCenterPane();
 							}onEntered:{
 								button2.color = "gray"
@@ -583,6 +584,7 @@ FocusScope {
 							anchors.fill: parent
 							hoverEnabled: true
 							onClicked: {
+								rightPaneColorValue = rightPaneColorValue + 1;
 								changeColorRightPane();
 							}onEntered:{
 								button3.color = "gray"
@@ -637,6 +639,7 @@ FocusScope {
 							anchors.fill: parent
 							hoverEnabled: true
 							onClicked: {
+								highlightColorValue = highlightColorValue + 1;
 								changeColorHighlight();
 							}onEntered:{
 								button4.color = "gray"
@@ -691,6 +694,7 @@ FocusScope {
 							anchors.fill: parent
 							hoverEnabled: true
 							onClicked: {
+								textColorValue = textColorValue + 1;
 								changeColorText();
 							}onEntered:{
 								button5.color = "gray"
@@ -745,6 +749,7 @@ FocusScope {
 							anchors.fill: parent
 							hoverEnabled: true
 							onClicked: {
+								gameboxColorValue = gameboxColorValue + 1;
 								changeColorGameBox();
 							}onEntered:{
 								button6.color = "gray"
@@ -799,7 +804,8 @@ FocusScope {
 							anchors.fill: parent
 							hoverEnabled: true
 							onClicked: {
-								changeLanguageValue();
+								languageValue = languageValue + 1;
+								changeLanguage();
 							}onEntered:{
 								button7.color = "gray"
 							}
@@ -1273,7 +1279,6 @@ FocusScope {
 	}
 	//functions
 	function changeColorCenterPane(){
-		centerPaneColorValue = centerPaneColorValue + 1
 		if (centerPaneColorValue>19){
 			centerPaneColorValue = 0
 		}
@@ -1334,12 +1339,11 @@ FocusScope {
 				break;
 			case 18:
 				centerPaneBackground = "black";
-				break;
-				
+				break;				
 		}
+		api.memory.set("centerPaneColorValue", centerPaneColorValue);
 	}
 	function changeColorLeftPane(){
-		leftPaneColorValue = leftPaneColorValue + 1
 		if (leftPaneColorValue>19){
 			leftPaneColorValue = 0
 		}
@@ -1405,9 +1409,9 @@ FocusScope {
 				leftPaneBackground = "white";
 				break;				
 		}
+		api.memory.set("leftPaneColorValue", leftPaneColorValue);
 	}
 	function changeColorRightPane(){
-		rightPaneColorValue = rightPaneColorValue + 1
 		if (rightPaneColorValue>19){
 			rightPaneColorValue = 0
 		}
@@ -1471,12 +1475,11 @@ FocusScope {
 				break;
 			case 19:
 				rightPaneBackground = "white";
-				break;
-				
+				break;				
 		}
+		api.memory.set("rightPaneColorValue", rightPaneColorValue);
 	}
 	function changeColorHighlight(){
-		highlightColorValue = highlightColorValue + 1
 		if (highlightColorValue>19){
 			highlightColorValue = 0
 		}
@@ -1540,12 +1543,11 @@ FocusScope {
 				break;
 			case 19:
 				highlightColor = "white";
-				break;
-				
+				break;				
 		}
+		api.memory.set("highlightColorValue", highlightColorValue);
 	}
 	function changeColorGameBox(){
-		gameboxColorValue = gameboxColorValue + 1
 		if (gameboxColorValue>19){
 			gameboxColorValue = 0
 		}
@@ -1609,12 +1611,11 @@ FocusScope {
 				break;
 			case 19:
 				gameBoxBackgroundColor = "white";
-				break;
-				
+				break;				
 		}
+		api.memory.set("gameboxColorValue", gameboxColorValue);
 	}
 	function changeColorText(){
-		textColorValue = textColorValue + 1
 		if (textColorValue>19){
 			textColorValue = 0
 		}
@@ -1678,18 +1679,14 @@ FocusScope {
 				break;
 			case 19:
 				textColor = "white";
-				break;
-				
+				break;				
 		}
+		api.memory.set("textColorValue", textColorValue);
 	}
-	function changeLanguageValue(){
-		languageValue = languageValue + 1;
+	function changeLanguage(){
 		if(languageValue>1){
 			languageValue = 0;
 		}
-		changeLanguage();
-	}
-	function changeLanguage(){
 		switch(languageValue){
 			case 0:
 				langCollections= "Collections"
@@ -1722,5 +1719,45 @@ FocusScope {
 				langLang= "Idioma"
 				break;
 		}
+		api.memory.set("languageValue", languageValue);
+	}
+	function initMemoryValues(){
+		if(!api.memory.has("highlightColorValue")){
+			api.memory.set("highlightColorValue", 19);
+		}
+		if(!api.memory.has("leftPaneColorValue")){
+			api.memory.set("leftPaneColorValue", 4);
+		}
+		if(!api.memory.has("centerPaneColorValue")){
+			api.memory.set("centerPaneColorValue", 18);
+		}
+		if(!api.memory.has("rightPaneColorValue")){
+			api.memory.set("rightPaneColorValue", 4);
+		}
+		if(!api.memory.has("gameboxColorValue")){
+			api.memory.set("gameboxColorValue", 17);
+		}
+		if(!api.memory.has("textColorValue")){
+			api.memory.set("textColorValue", 19);
+		}
+		if(!api.memory.has("languageValue")){
+			api.memory.set("languageValue", 0);
+		}
+	}	
+	function getValuesFromMemory(){
+		highlightColorValue= api.memory.get("highlightColorValue");
+		changeColorHighlight();
+		leftPaneColorValue= api.memory.get("leftPaneColorValue");
+		changeColorLeftPane();
+		centerPaneColorValue= api.memory.get("centerPaneColorValue");
+		changeColorCenterPane();
+		rightPaneColorValue= api.memory.get("rightPaneColorValue");
+		changeColorRightPane();
+		gameboxColorValue= api.memory.get("gameboxColorValue");
+		changeColorGameBox();
+		textColorValue= api.memory.get("textColorValue");
+		changeColorText();
+		languageValue= api.memory.get("languageValue");
+		changeLanguage();		
 	}
 }
