@@ -39,6 +39,7 @@ It may also be preferable to convert the created file "gamelist.xml" (assuming E
 ### Version history
 v1.01
 - Values are now stored in api.memory
+
 v1.0
 - Initial release
 
@@ -74,5 +75,6 @@ Também é possível converter o arquivo "gamelist.xml" (se no momento que você
 ### Histórico de versões
 v1.01
 - Agora os valores são salvos em api.memory
+
 v1.0
 - Lançamento inicial
