@@ -37,7 +37,8 @@ Skraper will place these in your roms folder under another folder called "media"
 It may also be preferable to convert the created file "gamelist.xml" (assuming EmulationStation was chosen for the game list in Skraper) to a "metadata.txt" file using the [Pegasus conversion tool](http://pegasus-frontend.org/tools/convert/)
 
 ### Version history
-
+v1.01
+- Values are now stored in api.memory
 v1.0
 - Initial release
 
@@ -71,6 +72,7 @@ O aplicativo Skraper vai por esses arquivos dentro da sua pasta de roms dentro d
 Também é possível converter o arquivo "gamelist.xml" (se no momento que você utilizou o Skraper, você escolheu a opção EmulationStation) para um arquivo de nome "metadata.txt" usando a [Ferramenta de conversão Pegasus](http://pegasus-frontend.org/tools/convert/)
 
 ### Histórico de versões
-
+v1.01
+- Agora os valores são salvos em api.memory
 v1.0
 - Lançamento inicial
