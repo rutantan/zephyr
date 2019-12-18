@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import SortFilterProxyModel 0.2
 
 FocusScope {
 	
@@ -31,69 +32,67 @@ FocusScope {
 	property var gameBoxBackgroundColor: darkgray
 	
 	//current index values
-	property int collectionValue: 0; 
 	property int highlightColorValue: 17;
-	property int leftPaneColorValue: 4;
-	property int centerPaneColorValue: 19;
-	property int rightPaneColorValue: 4;
+	property int leftPaneColorValue: 17;
+	property int backgroundColorValue: 3;
+	property int rightPaneColorValue: 17;
 	property int gameboxColorValue: 18;
 	property int textColorValue: 17;
+	property int sorterValue: 0;
 	property int languageValue: 0;
+	property int backgroundValue: 2;
 	
 	property var collectionData: api.collections.get(0);
 	
 	//border and spaces
-	property int spaceBetweenGames: 10; 
-	property int borderSize: 5;
+	property int spaceBetweenGames: vpx(10); 
+	property int borderSize: vpx(5);
 	
 	//font sizes
-	property int titleFontSize: 24;
-	property int subtitleFontSize: 16;
-	property int fontSize: 14;
-	property int detailsFontSize: 16;
+	property int titleFontSize: vpx(30);
+	property int subtitleFontSize: vpx(18);
+	property int fontSize: vpx(16);
+	property int detailsFontSize: vpx(18);
+	property int collectionFontSize: vpx(24);
 	
 	property bool isRightPanelOpen: true;
-	
+	property bool isAscendingOrder: true;
 
 	//language variables
 	property var langCollections: "Collections"
 	property var langSettings: "Settings"
-	property var langCenterPaneColor: "Center pane color"
+	property var langBackgroundColor: "Background color"
 	property var langLeftPaneColor: "Left pane color"
 	property var langRightPaneColor: "Right pane color"
 	property var langTextColor: "Text color"
 	property var langGameBoxColor: "Game box color"
+	property var langYear: "Year"
 	property var langDeveloper: "Developer"
 	property var langGenre: "Genre"
 	property var langPlayers: "Players"
 	property var langPublisher: "Publisher"
 	property var langHighlight: "Highlight color"
+	property var langPlayCount: "Times played"
+	property var langSorter: "Name"
+	property var langBackgroundImage: "Background image"
+	property var langPlayTime: "Time played"
 	property var langLanguage: "English"
 	property var langLang: "Language"
 	
-		
+	//text variables
+	property var backgroundImageSource: "assets/panebackground2.png"
 	
-	Item{
+	//root
+	Rectangle{
 		id: root
 		anchors.fill: parent
-		// leftpane
-		
-		Rectangle{
-			id: collectionPane
-			
-			anchors.left: parent.left
-			anchors.top: parent.top
-			height: parent.height
-			width: (parent.width/10)*2
-			
-			color: leftPaneBackground
-			
-			visible: true
-			
-			Image{
+		color: centerPaneBackground
+		//backgroundImage
+		Image{
+			id: backgroundImage
 				anchors.fill: parent
 				
-				source: "assets/panebackground.png"
+				source: backgroundImageSource
 					
 				visible: true
 
@@ -104,8 +103,203 @@ FocusScope {
 				sourceSize { width: parent.width ; height: parent.height }
 				
 			}
+		//centerpane
+		Rectangle{
+			id: gamesPane
+			anchors.left: parent.left
+			anchors.top: parent.top
+			anchors.bottom: parent.bottom
+			width: ((parent.width/10)*5)
+			anchors.leftMargin: (parent.width/10)*2
 			
+			color: "transparent"
 			
+			GridView {
+				id: grid
+				anchors.fill: parent
+				anchors.leftMargin: ((parent.width%cellWidth)/2) 
+				model: collectionData.games
+				
+				delegate: gridDelegate
+				
+				cellWidth: vpx(180) + spaceBetweenGames
+				cellHeight: vpx(220) + spaceBetweenGames + (subtitleFontSize*2)
+				
+				keyNavigationEnabled: false
+				keyNavigationWraps: true
+				
+				highlightRangeMode: GridView.StrictlyEnforceRange 
+				snapMode: GridView.SnapOneRow
+				
+				focus: true
+				
+				Keys.onPressed: {
+					if (api.keys.isAccept(event)) {
+						event.accepted = true;
+						collectionData.games.get(grid.currentIndex).launch();
+					}
+					if (api.keys.isPrevPage(event)) {
+						if(leftPaneListView.currentIndex==0){
+							while(leftPaneListView.currentIndex<api.collections.count-1){
+								leftPaneListView.incrementCurrentIndex();
+							}
+						}
+						else{
+							leftPaneListView.decrementCurrentIndex()
+						}
+						collectionData = api.collections.get(leftPaneListView.currentIndex)
+						
+					}
+					if (api.keys.isNextPage(event)) {
+						if(leftPaneListView.currentIndex==(api.collections.count-1)){
+							while(leftPaneListView.currentIndex>0){
+								leftPaneListView.decrementCurrentIndex();
+							}
+						}
+						else{
+							leftPaneListView.incrementCurrentIndex()
+						}
+						collectionData = api.collections.get(leftPaneListView.currentIndex)
+					}
+					if (event.key == Qt.Key_Up ){
+						grid.moveCurrentIndexUp()
+					}
+					if (event.key == Qt.Key_Down){
+						grid.moveCurrentIndexDown()
+					}
+					if (event.key == Qt.Key_Left ){
+						grid.moveCurrentIndexLeft()
+					}
+					if (event.key == Qt.Key_Right){
+						grid.moveCurrentIndexRight()
+					}
+				}
+				
+				
+			}
+			//gameHighlight
+			Rectangle{
+				id: highlight
+				
+				x: grid.currentItem.x + ((parent.width%grid.cellWidth)/2)
+				
+				height: grid.cellHeight - spaceBetweenGames + borderSize
+				width: grid.cellWidth - spaceBetweenGames + borderSize
+				
+				color: "transparent"
+				border.color: highlightColor
+				border.width: borderSize
+				radius: 8
+						
+				Behavior on x { SmoothedAnimation { duration: 150 } }
+				Behavior on y { SmoothedAnimation { duration: 150 } }
+			}
+			Component{
+				id: gridDelegate
+				
+				Item{
+					
+					Rectangle {
+						anchors.left: parent.left
+						anchors.leftMargin: borderSize
+						anchors.top: parent.top
+						anchors.topMargin: borderSize
+						
+						width: grid.cellWidth - spaceBetweenGames - borderSize
+						height: grid.cellHeight - spaceBetweenGames - borderSize
+												
+						color:  "transparent"
+						
+						Rectangle{
+							anchors.fill: parent
+			
+							color: gameBoxBackgroundColor
+							radius: 5
+							opacity: 0.8
+						}
+						//gameBox
+						Image {
+							id: gameBox
+
+							width: vpx(180) - (borderSize*3)
+							height: vpx(220) - (subtitleFontSize*2)
+							
+							anchors.left: parent.left
+							anchors.leftMargin: borderSize
+							anchors.top: parent.top
+							anchors.topMargin: borderSize
+							
+							visible: source
+
+							// fill the whole area, cropping what lies outside
+							fillMode: Image.PreserveAspectFit 
+
+							asynchronous: true
+							source: assets.boxFront || assets.poster || assets.cartridge
+							sourceSize { height: vpx(220) - (subtitleFontSize*2) - (borderSize*2); width: vpx(180) - borderSize}
+						}
+						
+						Rectangle{
+							color: "transparent"
+							
+							anchors.top: parent.top
+							anchors.topMargin: gameBox.height + (borderSize*2)
+							anchors.left: parent.left
+							anchors.leftMargin: borderSize
+							anchors.right: parent.right
+							anchors.rightMargin: borderSize
+							anchors.bottom: parent.bottom
+						
+							Text {
+								text: modelData.title 
+																						
+								anchors.fill: parent
+								anchors.leftMargin: borderSize
+								anchors.rightMargin: borderSize
+
+								horizontalAlignment: Text.AlignLeft
+								verticalAlignment: Text.AlignTop
+								
+								
+								wrapMode: Text.Wrap							
+								maximumLineCount: 2
+								
+								color: textColor
+								font.pixelSize: subtitleFontSize
+								font.family: globalFonts.sans
+							}
+						}
+						
+						
+					}
+					MouseArea {
+						anchors.fill: parent
+						onClicked: grid.currentIndex = index
+					}				
+				}
+			}
+		}
+		// leftpane		
+		Rectangle{
+			id: collectionPane
+			
+			anchors.left: parent.left
+			anchors.top: parent.top
+			anchors.bottom: parent.bottom
+			
+			height: parent.height
+			width: (parent.width/10)*2
+			
+			color: "transparent"
+			visible: true
+			//background
+			Rectangle{
+				anchors.fill: parent
+				color: leftPaneBackground
+				opacity: 0.8
+				
+			}			
+			//collectionTitle
 			Text {
 				id: collectionTitle
 				text: langCollections
@@ -127,7 +321,7 @@ FocusScope {
 				font.family: globalFonts.sans
 				font.bold: true
 			}
-				
+			//left Pane ListView
 			ListView {
 				id: leftPaneListView
 				
@@ -138,14 +332,13 @@ FocusScope {
 				anchors.leftMargin: borderSize*2
 				anchors.topMargin: borderSize*4
 				anchors.rightMargin: borderSize*2
-				anchors.bottomMargin: borderSize*2
+				anchors.bottomMargin: borderSize*2 + 30 //because of settingsButton1
 
 				model: api.collections
 				
 				delegate: leftPaneDelegate
 				
-				spacing: borderSize*5 //space between items
-							
+				spacing: borderSize*7 //space between items
 			}
 			
 			Rectangle{
@@ -156,9 +349,10 @@ FocusScope {
 				
 				
 				x: leftPaneListView.currentItem.x 
-				y: leftPaneListView.currentItem.y + (borderSize*4) + collectionTitle.height
+				y: leftPaneListView.currentItem.y + (borderSize*5) + titleFontSize
 				
-				height: 30
+				
+				height: collectionFontSize + borderSize
 				width: parent.width
 				
 				color: centerPaneBackground
@@ -172,27 +366,26 @@ FocusScope {
 				Text {
 					
 					text: {
-						if (api.collections.get(collectionValue).name == "Super Nintendo Entertainment System")
+						if (api.collections.get(leftPaneListView.currentIndex).name == "Super Nintendo Entertainment System")
 							"Super NES"
-						else if (api.collections.get(collectionValue).name == "Nintendo Entertainment System")
+						else if (api.collections.get(leftPaneListView.currentIndex).name == "Nintendo Entertainment System")
 							"NES"
-						else if (api.collections.get(collectionValue).name == "Nintendo Game Boy Advance")
+						else if (api.collections.get(leftPaneListView.currentIndex).name == "Nintendo Game Boy Advance")
 							"Nintendo GBA" 
-						else if (api.collections.get(collectionValue).name == "Nintendo Game Boy Color")
+						else if (api.collections.get(leftPaneListView.currentIndex).name == "Nintendo Game Boy Color")
 							"Nintendo GBC"
-						else if (api.collections.get(collectionValue).name == "Nintendo - Nintendo DS")
+						else if (api.collections.get(leftPaneListView.currentIndex).name == "Nintendo - Nintendo DS")
 							"Nintendo DS"
 						else
-							api.collections.get(collectionValue).name
+							api.collections.get(leftPaneListView.currentIndex).name
 						}
 
 											
 					anchors.fill: parent
-					anchors.topMargin: borderSize
 					anchors.leftMargin: borderSize*2
 					
 					width: parent.width - 30
-					height: subtitleFontSize
+					height: collectionFontSize
 					
 					// align to the center
 					//horizontalAlignment: Text.AlignHCenter
@@ -201,20 +394,19 @@ FocusScope {
 					maximumLineCount:1
 
 					color: textColor
-					font.pixelSize: subtitleFontSize
+					font.pixelSize: collectionFontSize
 					font.family: globalFonts.sans
 					font.bold: true
 				}
 				Text{
 					text: {
-						if(api.collections.get(collectionValue).games.count>9999)
+						if(api.collections.get(leftPaneListView.currentIndex).games.count>9999)
 							"9999"
 						else
-							api.collections.get(collectionValue).games.count
+							api.collections.get(leftPaneListView.currentIndex).games.count
 					}		
 					
 					anchors.fill: parent
-					anchors.topMargin: borderSize
 					anchors.leftMargin: borderSize*2
 					anchors.rightMargin: borderSize*2
 					
@@ -227,7 +419,7 @@ FocusScope {
 					maximumLineCount:1
 
 					color: textColor
-					font.pixelSize: subtitleFontSize
+					font.pixelSize: collectionFontSize
 					font.family: globalFonts.sans
 					font.bold: true
 				}
@@ -259,7 +451,7 @@ FocusScope {
 		
 							anchors.fill: parent
 							width: parent.width - 30
-							height: subtitleFontSize
+							height: collectionFontSize + (borderSize*4)
 							
 							//horizontalAlignment: Text.AlignHCenter
 							//verticalAlignment: Text.AlignVCenter
@@ -267,7 +459,7 @@ FocusScope {
 							maximumLineCount:1
 
 							color: textColor
-							font.pixelSize: subtitleFontSize
+							font.pixelSize: collectionFontSize
 							font.family: globalFonts.sans
 						}
 						Text{
@@ -281,7 +473,7 @@ FocusScope {
 							anchors.leftMargin: borderSize*2
 							
 							width: 20
-							height: subtitleFontSize
+							height: collectionFontSize
 							
 							horizontalAlignment: Text.AlignRight
 							//verticalAlignment: Text.AlignVCenter
@@ -289,7 +481,7 @@ FocusScope {
 							maximumLineCount:1
 
 							color: textColor
-							font.pixelSize: subtitleFontSize
+							font.pixelSize: collectionFontSize
 							font.family: globalFonts.sans
 						}
 				}
@@ -323,8 +515,8 @@ FocusScope {
 			Rectangle{
 				id: settingsButton2Circle
 				anchors.fill: settingsButton2
-				width: 30
-				height: 30
+				width: vpx(30)
+				height: vpx(30)
 				radius: width*0.5
 				color: white
 					
@@ -352,7 +544,7 @@ FocusScope {
 				
 
 		}
-		//settingspane
+		//settingspane		
 		Rectangle{
 			id: settingsPane
 			
@@ -363,74 +555,66 @@ FocusScope {
 			height: parent.height
 			width: (parent.width/10)*2
 			
-			color: leftPaneBackground
+			color: "transparent"
 			
-			Image{
+			Rectangle{
 				anchors.fill: parent
+				color: leftPaneBackground
+				opacity: 0.8
 				
-				source: "assets/panebackground.png"
-					
-				visible: true
-
-				// fill the whole area, cropping what lies outside
-				fillMode: Image.PreserveAspectCrop 
-					
-				asynchronous: true
-				sourceSize { width: parent.width ; height: parent.height }
-				
-			}
+			}	
+			
 			Item{
 				anchors.fill: parent
 				
-			MouseArea {
-				anchors.fill: settingsButton1
-				hoverEnabled: true
-				onClicked: {
-					collectionPane.visible= true;
-					settingsPane.visible= false;
+				MouseArea {
+					anchors.fill: settingsButton1
+					hoverEnabled: true
+					onClicked: {
+						collectionPane.visible= true;
+						settingsPane.visible= false;
+					}
+					onEntered:{
+						settingsButton1Circle.color = "gray"
+					}
+					onExited:{
+						settingsButton1Circle.color = white
+					}
+					onPressed:{
+						settingsButton1Circle.color = darkgray
+					}
+					onReleased:{
+						settingsButton1Circle.color = white
+					}
 				}
-				onEntered:{
-					settingsButton1Circle.color = "gray"
+				
+				Rectangle{
+					id: settingsButton1Circle
+					anchors.fill: settingsButton1
+					width: vpx(30)
+					height: vpx(30)
+					radius: width*0.5
+					color: white
+						
 				}
-				onExited:{
-					settingsButton1Circle.color = white
-				}
-				onPressed:{
-					settingsButton1Circle.color = darkgray
-				}
-				onReleased:{
-					settingsButton1Circle.color = white
-				}
-			}
-			
-			Rectangle{
-				id: settingsButton1Circle
-				anchors.fill: settingsButton1
-				width: 30
-				height: 30
-				radius: width*0.5
-				color: white
+				Image {
+					id: settingsButton1
+					width: 30
+					height: 30
+					anchors.left: parent.left
+					anchors.bottom: parent.bottom
+					anchors.bottomMargin: borderSize
+					anchors.leftMargin: borderSize
 					
-			}
-			Image {
-				id: settingsButton1
-				width: 30
-				height: 30
-				anchors.left: parent.left
-				anchors.bottom: parent.bottom
-				anchors.bottomMargin: borderSize
-				anchors.leftMargin: borderSize
-				
-				visible: true
+					visible: true
 
-				// fill the whole area, cropping what lies outside
-				fillMode: Image.PreserveAspectFit 
+					// fill the whole area, cropping what lies outside
+					fillMode: Image.PreserveAspectFit 
 
-				asynchronous: true
-				source: "assets/btnsettings.png"
-				sourceSize { width: 30 ; height: 30 }
-			}
-				
+					asynchronous: true
+					source: "assets/btnsettings.png"
+					sourceSize { width: 30 ; height: 30 }
+				}
 				Text {
 					id: settingsTitle
 					text: langSettings
@@ -454,6 +638,7 @@ FocusScope {
 					font.family: globalFonts.sans
 					font.bold: true
 				}
+				//button1
 				Rectangle{
 					id: button1
 					//leftpanecolor
@@ -465,6 +650,8 @@ FocusScope {
 					height: btn1ColorText.height + (borderSize*2)
 					
 					color: white
+					border.width: 3
+					border.color: white
 					radius: 5
 					
 					Item{
@@ -477,13 +664,13 @@ FocusScope {
 								leftPaneColorValue = leftPaneColorValue + 1;
 								changeColorLeftPane();
 							}onEntered:{
-								button1.color = "gray"
+								button1.border.color = "gray"
 							}
 							onExited:{
-								button1.color = white
+								button1.border.color = white
 							}
 							onPressed:{
-								button1.color = darkgray
+								button1.color = "gray"
 							}
 							onReleased:{
 								button1.color = white
@@ -491,7 +678,7 @@ FocusScope {
 						}
 						Text {
 							id: btn1ColorText
-							text: langLeftPaneColor
+							text: langLeftPaneColor + ": " + leftPaneColorValue
 
 													
 							anchors.top: parent.top
@@ -509,6 +696,7 @@ FocusScope {
 						}
 					}
 				}
+				//button2
 				Rectangle{
 					id: button2
 					//centerpanecolor
@@ -520,6 +708,8 @@ FocusScope {
 					height: btn2ColorText.height + (borderSize*2)
 					
 					color: white
+					border.width: 3
+					border.color: white
 					radius: 5
 					
 					Item{
@@ -529,16 +719,16 @@ FocusScope {
 							anchors.fill: parent
 							hoverEnabled: true
 							onClicked: {
-								centerPaneColorValue = centerPaneColorValue + 1;
+								backgroundColorValue = backgroundColorValue + 1;
 								changeColorCenterPane();
 							}onEntered:{
-								button2.color = "gray"
+								button2.border.color = "gray"
 							}
 							onExited:{
-								button2.color = white
+								button2.border.color = white
 							}
 							onPressed:{
-								button2.color = darkgray
+								button2.color = "gray"
 							}
 							onReleased:{
 								button2.color = white
@@ -546,7 +736,7 @@ FocusScope {
 						}
 						Text {
 							id: btn2ColorText
-							text: langCenterPaneColor
+							text: langBackgroundColor + ": " + backgroundColorValue
 
 													
 							anchors.top: parent.top
@@ -564,6 +754,7 @@ FocusScope {
 						}
 					}
 				}
+				//button3
 				Rectangle{
 					id: button3
 					//rightpanecolor
@@ -575,6 +766,8 @@ FocusScope {
 					height: btn2ColorText.height + (borderSize*2)
 					
 					color: white
+					border.width: 3
+					border.color: white
 					radius: 5
 					
 					Item{
@@ -587,13 +780,13 @@ FocusScope {
 								rightPaneColorValue = rightPaneColorValue + 1;
 								changeColorRightPane();
 							}onEntered:{
-								button3.color = "gray"
+								button3.border.color = "gray"
 							}
 							onExited:{
-								button3.color = white
+								button3.border.color = white
 							}
 							onPressed:{
-								button3.color = darkgray
+								button3.color = "gray"
 							}
 							onReleased:{
 								button3.color = white
@@ -601,7 +794,7 @@ FocusScope {
 						}
 						Text {
 							id: btn3ColorText
-							text: langRightPaneColor
+							text: langRightPaneColor + ": " + rightPaneColorValue
 
 													
 							anchors.top: parent.top
@@ -619,6 +812,7 @@ FocusScope {
 						}
 					}
 				}
+				//button4
 				Rectangle{
 					id: button4
 					//highlightcolor
@@ -630,6 +824,8 @@ FocusScope {
 					height: btn2ColorText.height + (borderSize*2)
 					
 					color: white
+					border.width: 3
+					border.color: white
 					radius: 5
 					
 					Item{
@@ -642,13 +838,13 @@ FocusScope {
 								highlightColorValue = highlightColorValue + 1;
 								changeColorHighlight();
 							}onEntered:{
-								button4.color = "gray"
+								button4.border.color = "gray"
 							}
 							onExited:{
-								button4.color = white
+								button4.border.color = white
 							}
 							onPressed:{
-								button4.color = darkgray
+								button4.color = "gray"
 							}
 							onReleased:{
 								button4.color = white
@@ -656,7 +852,7 @@ FocusScope {
 						}
 						Text {
 							id: btn4ColorText
-							text: langHighlight
+							text: langHighlight + ": " + highlightColorValue
 
 													
 							anchors.top: parent.top
@@ -674,6 +870,7 @@ FocusScope {
 						}
 					}
 				}
+				//button5
 				Rectangle{
 					id: button5
 					//textColor
@@ -685,6 +882,8 @@ FocusScope {
 					height: btn2ColorText.height + (borderSize*2)
 					
 					color: white
+					border.width: 3
+					border.color: white
 					radius: 5
 					
 					Item{
@@ -697,13 +896,13 @@ FocusScope {
 								textColorValue = textColorValue + 1;
 								changeColorText();
 							}onEntered:{
-								button5.color = "gray"
+								button5.border.color = "gray"
 							}
 							onExited:{
-								button5.color = white
+								button5.border.color = white
 							}
 							onPressed:{
-								button5.color = darkgray
+								button5.color = "gray"
 							}
 							onReleased:{
 								button5.color = white
@@ -711,7 +910,7 @@ FocusScope {
 						}
 						Text {
 							id: btn5ColorText
-							text: langTextColor
+							text: langTextColor + ": " + textColorValue
 
 													
 							anchors.top: parent.top
@@ -729,6 +928,7 @@ FocusScope {
 						}
 					}
 				}
+				//button6
 				Rectangle{
 					id: button6
 					//highlightcolor
@@ -740,6 +940,8 @@ FocusScope {
 					height: btn2ColorText.height + (borderSize*2)
 					
 					color: white
+					border.width: 3
+					border.color: white
 					radius: 5
 					
 					Item{
@@ -752,13 +954,13 @@ FocusScope {
 								gameboxColorValue = gameboxColorValue + 1;
 								changeColorGameBox();
 							}onEntered:{
-								button6.color = "gray"
+								button6.border.color = "gray"
 							}
 							onExited:{
-								button6.color = white
+								button6.border.color = white
 							}
 							onPressed:{
-								button6.color = darkgray
+								button6.color = "gray"
 							}
 							onReleased:{
 								button6.color = white
@@ -766,7 +968,7 @@ FocusScope {
 						}
 						Text {
 							id: btn6ColorText
-							text: langGameBoxColor
+							text: langGameBoxColor + ": " + gameboxColorValue
 
 													
 							anchors.top: parent.top
@@ -784,6 +986,7 @@ FocusScope {
 						}
 					}
 				}
+				//button7
 				Rectangle{
 					id: button7
 					//highlightcolor
@@ -795,6 +998,66 @@ FocusScope {
 					height: btn2ColorText.height + (borderSize*2)
 					
 					color: white
+					border.width: 3
+					border.color: white
+					radius: 5
+					
+					Item{
+						anchors.fill: parent
+						
+						MouseArea {
+							anchors.fill: parent
+							hoverEnabled: true
+							onClicked: {
+								backgroundValue = backgroundValue + 1;
+								changeBackground();
+							}onEntered:{
+								button7.border.color = "gray"
+							}
+							onExited:{
+								button7.border.color = white
+							}
+							onPressed:{
+								button7.color = "gray"
+							}
+							onReleased:{
+								button7.color = white
+							}
+						}
+						Text {
+							id: btn7ColorText
+							text: langBackgroundImage + ": " + backgroundValue
+
+													
+							anchors.top: parent.top
+							anchors.left: parent.left
+							anchors.topMargin: borderSize
+							width: parent.width
+							
+							horizontalAlignment: Text.AlignHCenter
+							verticalAlignment: Text.AlignVCenter
+							wrapMode: Text.Wrap
+
+							color: leftPaneBackground
+							font.pixelSize: subtitleFontSize
+							font.family: globalFonts.sans
+						}
+					}
+				}
+				//button8
+				Rectangle{
+					id: button8
+					//highlightcolor
+					anchors.top: button7.bottom
+					anchors.topMargin: borderSize*4
+					anchors.left: parent.left
+					anchors.leftMargin: borderSize
+					width: parent.width - (borderSize*2)
+					height: btn2ColorText.height + (borderSize*2)
+					
+					color: white
+					border.width: 3
+					border.color: white
 					radius: 5
 					
 					Item{
@@ -807,20 +1070,20 @@ FocusScope {
 								languageValue = languageValue + 1;
 								changeLanguage();
 							}onEntered:{
-								button7.color = "gray"
+								button8.border.color = "gray"
 							}
 							onExited:{
-								button7.color = white
+								button8.border.color = white
 							}
 							onPressed:{
-								button7.color = darkgray
+								button8.color = "gray"
 							}
 							onReleased:{
-								button7.color = white
+								button8.color = white
 							}
 						}
 						Text {
-							id: btn7ColorText
+							id: btn8ColorText
 							text: langLang + ": " + langLanguage
 
 													
@@ -841,286 +1104,6 @@ FocusScope {
 				}
 			}
 		}
-		//centerpane	
-		Rectangle{
-			id: gamesPane
-			
-			anchors.left: parent.left
-			anchors.top: parent.top
-			anchors.bottom: parent.bottom
-			width: (parent.width/10)*5
-			anchors.leftMargin: (parent.width/10)*2
-			
-			color: centerPaneBackground
-			
-			GridView{
-				id: grid
-				anchors.fill: parent
-				anchors.leftMargin: (parent.width%cellWidth)/2 
-				
-				model: collectionData.games
-				
-				delegate: gridDelegate
-				
-				cellWidth: 180 + spaceBetweenGames
-				cellHeight: 200 + spaceBetweenGames + 60
-				
-				keyNavigationEnabled: false
-				keyNavigationWraps: true
-				
-				highlightRangeMode: GridView.StrictlyEnforceRange 
-				highlight: highlight
-				highlightFollowsCurrentItem: true
-				snapMode: GridView.SnapOneRow
-				
-				focus: true
-				
-				Keys.onPressed: {
-					if (api.keys.isAccept(event)) {
-						event.accepted = true;
-						collectionData.games.get(grid.currentIndex).launch();
-					}
-					if (api.keys.isPrevPage(event)) {
-						collectionValue = collectionValue -1;
-						leftPaneListView.decrementCurrentIndex();
-						if(collectionValue<0){
-							collectionValue = api.collections.count-1;
-							while(leftPaneListView.currentIndex<leftPaneListView.count-1){
-								leftPaneListView.incrementCurrentIndex();
-							}
-						}
-						collectionData = api.collections.get(collectionValue);
-						
-					}
-					if (api.keys.isNextPage(event)) {
-						collectionValue = collectionValue +1;
-						leftPaneListView.incrementCurrentIndex();
-						if(collectionValue==api.collections.count){
-							collectionValue = 0;
-							while(leftPaneListView.currentIndex>0){
-								leftPaneListView.decrementCurrentIndex();
-							}
-						}
-						collectionData = api.collections.get(collectionValue);
-						
-					}
-					if (event.key == Qt.Key_Up ){
-						grid.moveCurrentIndexUp()
-					}
-					if (event.key == Qt.Key_Down){
-						grid.moveCurrentIndexDown()
-					}
-					if (event.key == Qt.Key_Left ){
-						grid.moveCurrentIndexLeft()
-					}
-					if (event.key == Qt.Key_Right){
-						grid;moveCurrentIndexRight()
-					}
-				}
-				
-				
-			}
-			
-			
-			Rectangle{
-				id: highlight
-				//anchors.fill: parent
-				//anchors.top: grid.currentItem * grid.cellHeight
-				//anchors.left: grid.currentItem * grid.cellWidth
-				x: grid.currentItem.x + ((parent.width%grid.cellWidth)/2)
-				y: grid.itemAtIndex(grid.currentIndex).y
-				
-				height: grid.cellHeight - spaceBetweenGames + borderSize
-				width: grid.cellWidth - spaceBetweenGames + borderSize
-				
-				color: "transparent"
-				border.color: highlightColor
-				border.width: borderSize
-						
-				Behavior on x { SmoothedAnimation { duration: 150 } }
-				Behavior on y { SmoothedAnimation { duration: 150 } }
-			}
-			
-			
-			Component{
-				id: gridDelegate
-				
-				Item{
-					
-					Rectangle {
-						anchors.left: parent.left
-						anchors.leftMargin: borderSize
-						anchors.top: parent.top
-						anchors.topMargin: borderSize
-						
-						width: grid.cellWidth - spaceBetweenGames - borderSize
-						height: grid.cellHeight - spaceBetweenGames - borderSize
-												
-						color:  "transparent"
-						
-						Rectangle{
-							anchors.fill: parent
-							
-							color: gameBoxBackgroundColor
-						}
-						
-						Rectangle{
-							color: "transparent"
-							
-							anchors.top: parent.top
-							anchors.topMargin: parent.height - 70 + (borderSize*2)
-							anchors.left: parent.left
-							anchors.leftMargin: borderSize
-							anchors.right: parent.right
-							anchors.rightMargin: borderSize
-							anchors.bottom: parent.bottom
-						
-							Text {
-								text: modelData.title 
-																						
-								anchors.fill: parent
-								anchors.leftMargin: borderSize
-								anchors.rightMargin: borderSize
-
-								horizontalAlignment: Text.AlignLeft
-								verticalAlignment: Text.AlignTop
-								
-								
-								wrapMode: Text.Wrap							
-								maximumLineCount: 2
-								
-								color: textColor
-								font.pixelSize: subtitleFontSize
-								font.family: globalFonts.sans
-							}
-							
-							Text {
-								text: modelData.developer 
-								
-															
-								anchors.fill: parent
-								anchors.leftMargin: borderSize
-								anchors.rightMargin: borderSize
-								anchors.bottomMargin: borderSize
-
-								horizontalAlignment: Text.AlignLeft
-								verticalAlignment: Text.AlignBottom
-								
-								wrapMode: Text.Wrap							
-								maximumLineCount: 1
-								
-								// set the font
-								color: textColor
-								font.pixelSize: fontSize
-								font.family: globalFonts.sans
-							}
-						}
-						Image {
-							id: gameBox
-
-							width: parent.width - (borderSize*2)
-							height: parent.height - 70
-							
-							anchors.left: parent.left
-							anchors.leftMargin: (borderSize)
-							anchors.top: parent.top
-							anchors.topMargin: borderSize
-							
-							visible: source
-
-							// fill the whole area, cropping what lies outside
-							fillMode: Image.PreserveAspectFit 
-
-							asynchronous: true
-							source: assets.boxFront || assets.poster || assets.cartridge
-							sourceSize { width: parent.width - (borderSize*2) ; height: parent.height - 70 }
-						}
-						
-					}
-				
-
-
-				}
-			}
-			
-			Rectangle{
-				id: rightPaneButton
-				
-				width: 30
-				height: 30
-				
-				anchors.right: parent.right
-				anchors.top: parent.top
-				
-				color: rightPaneBackground
-				radius: 8
-				
-				Rectangle{
-					id: rightPaneButtonBorder
-					
-					width: 10
-					height: 30
-					
-					anchors.right: parent.right
-					
-					color: rightPaneBackground
-				}
-				MouseArea {
-					anchors.fill: rightPaneButton
-					hoverEnabled: true
-					onClicked: {
-						if(isRightPanelOpen){
-							detailsPane.visible= false;
-							detailsPane.width= 0;
-							gamesPane.width = (root.width/10)*8;
-							rightPaneButtonImage.source= "assets/paneleft.png"
-							isRightPanelOpen = false;
-						}
-						else{
-							detailsPane.visible= true;
-							detailsPane.width= (root.width/10)*3;
-							gamesPane.width = (root.width/10)*5;
-							rightPaneButtonImage.source= "assets/paneright.png"
-							isRightPanelOpen = true;
-						}
-					}
-					onEntered:{
-						rightPaneButtonBorder.color = "gray"
-						rightPaneButton.color = "gray"
-					}
-					onExited:{
-						rightPaneButtonBorder.color = rightPaneBackground
-						rightPaneButton.color = rightPaneBackground
-					}
-					onPressed:{
-						rightPaneButtonBorder.color = darkgray
-						rightPaneButton.color = darkgray
-					}
-					onReleased:{
-						rightPaneButtonBorder.color = rightPaneBackground
-						rightPaneButton.color = rightPaneBackground
-					}
-				}
-				Image {
-					id: rightPaneButtonImage
-					
-					width: 30
-					height: 30
-					
-					anchors.right: parent.right
-					anchors.top: parent.top
-					
-					visible: source
-
-					// fill the whole area, cropping what lies outside
-					fillMode: Image.PreserveAspectFit 
-					
-					asynchronous: true
-					source: "assets/paneright.png"
-					sourceSize { width: 50 ; height: 50 }
-				}
-			}
-		}
 		//rightpane
 		Rectangle{
 			id: detailsPane
@@ -1131,22 +1114,15 @@ FocusScope {
 			width: (parent.width/10)*3
 			anchors.leftMargin: (parent.width/10)*7
 			
-			color: rightPaneBackground
+			color: "transparent"
+			visible: true
 			
-			Image{
+			Rectangle{
 				anchors.fill: parent
+				color: rightPaneBackground
+				opacity: 0.8
 				
-				source: "assets/panebackgroundright.png"
-					
-				visible: true
-
-				// fill the whole area, cropping what lies outside
-				fillMode: Image.PreserveAspectCrop 
-					
-				asynchronous: true
-				sourceSize { width: parent.width ; height: parent.height }
-				
-			}
+			}		
 				
 			Image {
 				id: gameImage
@@ -1165,7 +1141,7 @@ FocusScope {
 				asynchronous: true
 				source: collectionData.games.get(grid.currentIndex).assets.screenshots[0] || collectionData.games.get(grid.currentIndex).assets.banner || collectionData.games.get(grid.currentIndex).assets.steam
 			}
-			
+			//gameTitle
 			Text {
 				id: gameTitle
 				text: collectionData.games.get(grid.currentIndex).title
@@ -1187,40 +1163,38 @@ FocusScope {
 				color: textColor
 				font.pixelSize: titleFontSize
 				font.family: globalFonts.sans
-				font.bold: true
+				font.bold: FALSE
 				
 			}
-			
-			Text {
-				id: gameYear
-				text: collectionData.games.get(grid.currentIndex).releaseYear
-						
+			//detailsLine1
+			Rectangle{
+				id: detailsLine1
 				
 				anchors.top: gameTitle.bottom
-				anchors.topMargin: borderSize
+				anchors.topMargin: borderSize*2
 				anchors.left: parent.left
-				anchors.right: parent.right
-				
-				horizontalAlignment: Text.AlignHCenter
-				verticalAlignment: Text.AlignTop
-				wrapMode: Text.Wrap
-
+				anchors.leftMargin: borderSize*2
+				width: parent.width - (borderSize*4)
+				height: vpx(2)
 				color: textColor
-				font.pixelSize: detailsFontSize
-				font.family: globalFonts.sans
+				
 			}
-			
+			//gameDetailsLeft
 			Text {
 				id: gameDetails
-				text: "\n" + langDeveloper + ": " + collectionData.games.get(grid.currentIndex).developer + "\n" + 
-						langGenre + ": " + collectionData.games.get(grid.currentIndex).genre
+				text:
+					langYear + ": " + collectionData.games.get(grid.currentIndex).releaseYear + "\n" + 
+					langDeveloper + ": " + collectionData.games.get(grid.currentIndex).developer + "\n" + 
+					langGenre + ": " + collectionData.games.get(grid.currentIndex).genre + "\n" + 
+					langPlayCount + ": " + collectionData.games.get(grid.currentIndex).playCount 
 				
-				anchors.top: gameYear.bottom
+				anchors.top: detailsLine1.bottom
+				anchors.topMargin: borderSize
 				anchors.left: parent.left
-				anchors.leftMargin: borderSize*4
-				width: parent.width/2
+				anchors.leftMargin: borderSize*2
+				width: (parent.width/2) - borderSize
 				
-				horizontalAlignment: Text.AlignLeft
+				horizontalAlignment: Text.AlignJustify
 				verticalAlignment: Text.AlignTop
 				wrapMode: Text.Wrap
 
@@ -1228,20 +1202,22 @@ FocusScope {
 				font.pixelSize: detailsFontSize
 				font.family: globalFonts.sans
 			}
-			
+			//gameDetailsRight
 			Text {
 				
-				text: langPublisher + ": " + collectionData.games.get(grid.currentIndex).publisher + "\n" +
-					  langPlayers + ": " + collectionData.games.get(grid.currentIndex).players
+				text: "\n" +
+					langPublisher + ": " + collectionData.games.get(grid.currentIndex).publisher + "\n" +
+					langPlayers + ": " + collectionData.games.get(grid.currentIndex).players + "\n" +
+					langPlayTime + ": " +  collectionData.games.get(grid.currentIndex).playTime
 						
 				
-				anchors.top: gameDetails.top
-				anchors.topMargin: borderSize*3
+				anchors.top: detailsLine1.bottom
+				anchors.topMargin: borderSize
 				anchors.left: gameDetails.right
 				anchors.right: parent.right
-				anchors.rightMargin: borderSize*4
+				anchors.rightMargin: borderSize*2
 				
-				horizontalAlignment: Text.AlignLeft
+				horizontalAlignment: Text.AlignJustify
 				verticalAlignment: Text.AlignTop
 				wrapMode: Text.Wrap
 
@@ -1249,19 +1225,31 @@ FocusScope {
 				font.pixelSize: detailsFontSize
 				font.family: globalFonts.sans
 			}
-			
-			
-			Text {
-				id: description
-				text: collectionData.games.get(grid.currentIndex).summary || collectionData.games.get(grid.currentIndex).description
-				
+			//detailsLine2
+			Rectangle{
+				id: detailsLine2
 				
 				anchors.top: gameDetails.bottom
 				anchors.topMargin: borderSize*2
 				anchors.left: parent.left
-				anchors.leftMargin: borderSize*4
+				anchors.leftMargin: borderSize*2
+				width: parent.width - (borderSize*4)
+				height: vpx(2)
+				color: textColor
+				
+			}
+			//description
+			Text {
+				id: description
+				text: collectionData.games.get(grid.currentIndex).description || collectionData.games.get(grid.currentIndex).summary
+				
+				
+				anchors.top: detailsLine2.bottom
+				anchors.topMargin: borderSize
+				anchors.left: parent.left
+				anchors.leftMargin: borderSize*2
 				anchors.right: parent.right
-				anchors.rightMargin: borderSize*4
+				anchors.rightMargin: borderSize*2
 				
 				horizontalAlignment: Text.AlignJustify
 				verticalAlignment: Text.AlignTop
@@ -1276,13 +1264,79 @@ FocusScope {
 			
 				
 		}
+		//rightPaneButton
+		Rectangle{
+			id: rightPaneButton
+			
+			width: vpx(30)
+			height: vpx(30)
+			
+			anchors.right: parent.right
+			anchors.rightMargin: detailsPane.width 
+			anchors.top: parent.top
+			
+			color: rightPaneBackground
+			radius: 5
+			opacity: 0.8
+			
+			MouseArea {
+				anchors.fill: rightPaneButton
+				hoverEnabled: true
+				onClicked: {
+					if(isRightPanelOpen){
+						detailsPane.visible= false;
+						detailsPane.width= 0;
+						gamesPane.width = (root.width/10)*7;
+						rightPaneButtonImage.source= "assets/paneleft.png"
+						isRightPanelOpen = false;
+					}
+					else{
+						detailsPane.visible= true;
+						detailsPane.width= (root.width/10)*3;
+						gamesPane.width = (root.width/10)*5;
+						rightPaneButtonImage.source= "assets/paneright.png"
+						isRightPanelOpen = true;
+					}
+				}
+				onEntered:{
+					rightPaneButton.color = "gray"
+				}
+				onExited:{
+					rightPaneButton.color = rightPaneBackground
+				}
+				onPressed:{
+					rightPaneButton.color = darkgray
+				}
+				onReleased:{
+					rightPaneButton.color = rightPaneBackground
+				}
+			}
+			Image {
+				id: rightPaneButtonImage
+				
+				width: vpx(30)
+				height: vpx(30)
+				
+				anchors.right: parent.right
+				anchors.top: parent.top
+				
+				visible: source
+
+				// fill the whole area, cropping what lies outside
+				fillMode: Image.PreserveAspectFit 
+				
+				asynchronous: true
+				source: "assets/paneright.png"
+				sourceSize { width: vpx(50) ; height: vpx(50) }
+			}
+		}
 	}
 	//functions
 	function changeColorCenterPane(){
-		if (centerPaneColorValue>19){
-			centerPaneColorValue = 0
+		if (backgroundColorValue>19){
+			backgroundColorValue = 0
 		}
-		switch(centerPaneColorValue){
+		switch(backgroundColorValue){
 			case 0:
 				centerPaneBackground = lightgreen;
 				break;
@@ -1341,7 +1395,7 @@ FocusScope {
 				centerPaneBackground = "black";
 				break;				
 		}
-		api.memory.set("centerPaneColorValue", centerPaneColorValue);
+		api.memory.set("backgroundColorValue", backgroundColorValue);
 	}
 	function changeColorLeftPane(){
 		if (leftPaneColorValue>19){
@@ -1548,7 +1602,7 @@ FocusScope {
 		api.memory.set("highlightColorValue", highlightColorValue);
 	}
 	function changeColorGameBox(){
-		if (gameboxColorValue>19){
+		if (gameboxColorValue>20){
 			gameboxColorValue = 0
 		}
 		switch(gameboxColorValue){
@@ -1611,7 +1665,10 @@ FocusScope {
 				break;
 			case 19:
 				gameBoxBackgroundColor = "white";
-				break;				
+				break;
+			case 20:
+				gameBoxBackgroundColor = "transparent";
+				break;
 		}
 		api.memory.set("gameboxColorValue", gameboxColorValue);
 	}
@@ -1683,6 +1740,23 @@ FocusScope {
 		}
 		api.memory.set("textColorValue", textColorValue);
 	}
+	function changeBackground(){
+		if(backgroundValue>2){
+			backgroundValue = 0;
+		}
+		switch(backgroundValue){
+			case 0:
+				backgroundImageSource = "assets/panebackground0.png"
+				break;
+			case 1:
+				backgroundImageSource = "assets/panebackground1.png"
+				break;
+			case 2:
+				backgroundImageSource = "assets/panebackground2.png"
+				break;
+		}
+		api.memory.set("backgroundValue", backgroundValue);
+	}
 	function changeLanguage(){
 		if(languageValue>1){
 			languageValue = 0;
@@ -1691,30 +1765,36 @@ FocusScope {
 			case 0:
 				langCollections= "Collections"
 				langSettings= "Settings";
-				langCenterPaneColor= "Center pane color";
+				langBackgroundColor= "Background color";
 				langLeftPaneColor= "Left pane color"
 				langRightPaneColor= "Right pane color"
 				langHighlight= "Highlight color"
 				langTextColor= "Text color"
+				langYear= "Year"
 				langDeveloper= "Developer"
 				langGenre= "Genre"
 				langPlayers= "Players"
 				langPublisher= "Publisher"
+				langPlayCount= "Times played"
+				langPlayTime= "Time played"
 				langLanguage= "English"
 				langLang= "Language"
 				break;
 			case 1:
 				langCollections= "Coleções"
 				langSettings= "Configurações";
-				langCenterPaneColor= "Cor do painel central";
+				langBackgroundColor= "Cor de fundo";
 				langLeftPaneColor= "Cor do painel esquerdo"
 				langRightPaneColor= "Cor do painel direito"
 				langHighlight= "Cor de realce"
 				langTextColor= "Cor do texto"
+				langYear= "Ano"
 				langDeveloper= "Produtora"
 				langGenre= "Gênero"
 				langPlayers= "Jogadores"
 				langPublisher= "Editora"
+				langPlayCount= "Vezes jogado"
+				langPlayTime= "Tempo jogado"
 				langLanguage= "Português"
 				langLang= "Idioma"
 				break;
@@ -1726,19 +1806,22 @@ FocusScope {
 			api.memory.set("highlightColorValue", 19);
 		}
 		if(!api.memory.has("leftPaneColorValue")){
-			api.memory.set("leftPaneColorValue", 4);
+			api.memory.set("leftPaneColorValue", 17);
 		}
-		if(!api.memory.has("centerPaneColorValue")){
-			api.memory.set("centerPaneColorValue", 18);
+		if(!api.memory.has("backgroundColorValue")){
+			api.memory.set("backgroundColorValue", 3);
 		}
 		if(!api.memory.has("rightPaneColorValue")){
-			api.memory.set("rightPaneColorValue", 4);
+			api.memory.set("rightPaneColorValue", 17);
 		}
 		if(!api.memory.has("gameboxColorValue")){
 			api.memory.set("gameboxColorValue", 17);
 		}
 		if(!api.memory.has("textColorValue")){
 			api.memory.set("textColorValue", 19);
+		}
+		if(!api.memory.has("backgroundValue")){
+			api.memory.set("backgroundValue", 2);
 		}
 		if(!api.memory.has("languageValue")){
 			api.memory.set("languageValue", 0);
@@ -1749,7 +1832,7 @@ FocusScope {
 		changeColorHighlight();
 		leftPaneColorValue= api.memory.get("leftPaneColorValue");
 		changeColorLeftPane();
-		centerPaneColorValue= api.memory.get("centerPaneColorValue");
+		backgroundColorValue= api.memory.get("backgroundColorValue");
 		changeColorCenterPane();
 		rightPaneColorValue= api.memory.get("rightPaneColorValue");
 		changeColorRightPane();
@@ -1757,7 +1840,9 @@ FocusScope {
 		changeColorGameBox();
 		textColorValue= api.memory.get("textColorValue");
 		changeColorText();
+		backgroundValue= api.memory.get("backgroundValue");
+		changeBackground();
 		languageValue= api.memory.get("languageValue");
-		changeLanguage();		
+		changeLanguage();	
 	}
 }
