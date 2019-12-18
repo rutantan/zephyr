@@ -1,10 +1,10 @@
-# ZEPHYR v1.01
+# ZEPHYR v1.02
 
-![Screenshot 1](https://i.imgur.com/2sddtFI.png)
+![Screenshot 1](https://i.imgur.com/9FZeOpt.png)
 
-![Screenshot 2](https://i.imgur.com/wRJztnl.png)
+![Screenshot 2](https://i.imgur.com/sIsrSIS.png)
 
-![Screenshot 3](https://i.imgur.com/Iezjy3I.png)
+![Screenshot 3](https://i.imgur.com/ylLepRD.png)
 
 
 ## English
@@ -36,12 +36,8 @@ Skraper will place these in your roms folder under another folder called "media"
 
 It may also be preferable to convert the created file "gamelist.xml" (assuming EmulationStation was chosen for the game list in Skraper) to a "metadata.txt" file using the [Pegasus conversion tool](http://pegasus-frontend.org/tools/convert/)
 
-### Version history
-v1.01
-- Values are now stored in api.memory
-
-v1.0
-- Initial release
+### Download
+[Here](https://github.com/rutantan/zephyr/releases)
 
 ## Português
 ### Tema ZEPHYR para o Pegasus Frontend
@@ -72,9 +68,5 @@ O aplicativo Skraper vai por esses arquivos dentro da sua pasta de roms dentro d
 
 Também é possível converter o arquivo "gamelist.xml" (se no momento que você utilizou o Skraper, você escolheu a opção EmulationStation) para um arquivo de nome "metadata.txt" usando a [Ferramenta de conversão Pegasus](http://pegasus-frontend.org/tools/convert/)
 
-### Histórico de versões
-v1.01
-- Agora os valores são salvos em api.memory
-
-v1.0
-- Lançamento inicial
+### Baixar
+[Aqui](https://github.com/rutantan/zephyr/releases)
