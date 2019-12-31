@@ -1,4 +1,4 @@
-# ZEPHYR v1.02
+# ZEPHYR v1.1
 
 ![Screenshot 1](https://i.imgur.com/9FZeOpt.png)
 
