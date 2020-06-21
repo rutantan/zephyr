@@ -353,7 +353,7 @@ FocusScope {
 				anchors.topMargin: borderSize*4
 				anchors.rightMargin: borderSize*2
 				
-				height: api.collections.count*collectionFontSize 
+				height: (api.collections.count+1)*collectionFontSize 
 				//anchors.bottomMargin: borderSize*2 + 30 //because of settingsButton1
 
 				model: api.collections
@@ -366,7 +366,7 @@ FocusScope {
 			Rectangle{
 				id: allGames
 				anchors.top: leftPaneListView.bottom
-				anchors.topMargin: vpx(borderSize*6)
+				anchors.topMargin: vpx(borderSize*3)
 				anchors.left: parent.left
 				anchors.right: parent.right
 				anchors.bottom: parent.bottom
@@ -482,7 +482,7 @@ FocusScope {
 					color: textColor
 					font.pixelSize: collectionFontSize
 					font.family: globalFonts.sans
-					font.bold: true
+					//font.bold: true
 				}
 				//Highlight - number of games in collection
 				Text{
@@ -498,7 +498,7 @@ FocusScope {
 					anchors.rightMargin: borderSize*2
 					
 					width: 20
-					height: subtitleFontSize
+					height: collectionFontSize
 					
 					horizontalAlignment: Text.AlignRight
 					//verticalAlignment: Text.AlignVCenter
@@ -508,7 +508,7 @@ FocusScope {
 					color: textColor
 					font.pixelSize: collectionFontSize
 					font.family: globalFonts.sans
-					font.bold: true
+					//font.bold: true
 				}
 			}
 				
@@ -1403,9 +1403,8 @@ FocusScope {
 			anchors.rightMargin: detailsPane.width 
 			anchors.top: parent.top
 			
-			color: rightPaneBackground
-			radius: 5
-			opacity: 0.8
+			color: "transparent"
+
 			
 			MouseArea {
 				anchors.fill: rightPaneButton
@@ -1428,18 +1427,49 @@ FocusScope {
 					}
 				}
 				onEntered:{
-					rightPaneButton.color = "gray"
+					rightPaneButtonBackground.color = "gray"
+					rightPaneButtonBorder.color = "gray"
 				}
 				onExited:{
-					rightPaneButton.color = rightPaneBackground
+					rightPaneButtonBackground.color = rightPaneBackground
+					rightPaneButtonBorder.color = rightPaneBackground
 				}
 				onPressed:{
-					rightPaneButton.color = darkgray
+					rightPaneButtonBackground.color = darkgray
+					rightPaneButtonBorder.color = darkgray
 				}
 				onReleased:{
-					rightPaneButton.color = rightPaneBackground
+					rightPaneButtonBackground.color = rightPaneBackground
+					rightPaneButtonBorder.color = rightPaneBackground
 				}
 			}
+			
+			Rectangle{
+				id: rightPaneButtonBackground
+				
+				width: vpx(28)
+				height: vpx(30)
+				
+				anchors.left: rightPaneButton.left
+				
+				color: rightPaneBackground
+				
+				radius: 5
+				opacity: 0.8
+			}
+			
+			Rectangle{
+				id: rightPaneButtonBorder
+				
+				width: vpx(5)
+				height: vpx(30)
+				
+				anchors.right: rightPaneButton.right
+				
+				color: rightPaneBackground
+				opacity: 0.8
+			}
+			
 			Image {
 				id: rightPaneButtonImage
 				
@@ -1458,6 +1488,7 @@ FocusScope {
 				source: "assets/paneright.png"
 				sourceSize { width: vpx(50) ; height: vpx(50) }
 			}
+			
 		}
 	}
 	//functions
@@ -1870,7 +1901,7 @@ FocusScope {
 		api.memory.set("textColorValue", textColorValue);
 	}
 	function changeBackground(){
-		if(backgroundValue>2){
+		if(backgroundValue>3){
 			backgroundValue = 0;
 		}
 		switch(backgroundValue){
@@ -1882,6 +1913,9 @@ FocusScope {
 				break;
 			case 2:
 				backgroundImageSource = "assets/panebackground2.png"
+				break;
+			case 3:
+				backgroundImageSource = "assets/panebackground3.png"
 				break;
 		}
 		api.memory.set("backgroundValue", backgroundValue);
